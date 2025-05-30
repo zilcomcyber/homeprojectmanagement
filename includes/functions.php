@@ -643,4 +643,3 @@ function update_project_progress($project_id) {
     }
 }
 ?>
-</replit_final_file>
