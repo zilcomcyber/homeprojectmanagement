@@ -1,0 +1,45 @@
+
+Project Steps
+
+Warning: Undefined array key "is_completed" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 167
+1
+Road Survey & Design
+
+Warning: Undefined array key "step_description" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 182
+
+Warning: Undefined array key "completed_date" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 184
+
+Warning: Undefined array key "is_completed" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 167
+2
+Land Acquisition
+
+Warning: Undefined array key "step_description" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 182
+
+Warning: Undefined array key "completed_date" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 184
+
+Warning: Undefined array key "is_completed" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 167
+3
+Material Procurement
+
+Warning: Undefined array key "step_description" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 182
+
+Warning: Undefined array key "completed_date" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 184
+
+Warning: Undefined array key "is_completed" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 167
+4
+Road Construction
+
+Warning: Undefined array key "step_description" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 182
+
+Warning: Undefined array key "completed_date" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 184
+
+Warning: Undefined array key "is_completed" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 167
+5
+Drainage System Installation
+
+Warning: Undefined array key "step_description" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 182
+
+Warning: Undefined array key "completed_date" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 184
+
+Warning: Undefined array key "is_completed" in C:\xampp\htdocs\CountyProjectTracker\project_details.php on line 167
+6

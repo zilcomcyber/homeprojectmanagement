@@ -1,0 +1,367 @@
+<?php
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/project_steps_templates.php';
+
+/**
+ * Sanitize input data
+ */
+function sanitize_input($data) {
+    return htmlspecialchars(strip_tags(trim($data)), ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Validate email format
+ */
+function validate_email($email) {
+    return filter_var($email, FILTER_VALIDATE_EMAIL);
+}
+
+/**
+ * Generate CSRF token
+ */
+function generate_csrf_token() {
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * Verify CSRF token
+ */
+function verify_csrf_token($token) {
+    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+}
+
+/**
+ * Format currency
+ */
+function format_currency($amount) {
+    return 'KES ' . number_format($amount, 2);
+}
+
+/**
+ * Format date
+ */
+function format_date($date) {
+    return date('M d, Y', strtotime($date));
+}
+
+/**
+ * Get project status badge class
+ */
+function get_status_badge_class($status) {
+    $classes = [
+        'planning' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+        'ongoing' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+        'completed' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+        'suspended' => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+        'cancelled' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+    ];
+    return $classes[$status] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+}
+
+/**
+ * Get progress bar color class
+ */
+function get_progress_color_class($percentage) {
+    if ($percentage >= 80) return 'bg-green-500';
+    if ($percentage >= 60) return 'bg-blue-500';
+    if ($percentage >= 40) return 'bg-yellow-500';
+    if ($percentage >= 20) return 'bg-orange-500';
+    return 'bg-red-500';
+}
+
+/**
+ * Fetch all projects with filters
+ */
+function get_projects($filters = []) {
+    global $pdo;
+
+    $sql = "SELECT p.*, d.name as department_name, w.name as ward_name, 
+                   sc.name as sub_county_name, c.name as county_name
+            FROM projects p
+            JOIN departments d ON p.department_id = d.id
+            JOIN wards w ON p.ward_id = w.id
+            JOIN sub_counties sc ON p.sub_county_id = sc.id
+            JOIN counties c ON p.county_id = c.id
+            WHERE 1=1";
+
+    $params = [];
+
+    if (!empty($filters['search'])) {
+        $sql .= " AND (p.project_name LIKE ? OR p.description LIKE ?)";
+        $params[] = '%' . $filters['search'] . '%';
+        $params[] = '%' . $filters['search'] . '%';
+    }
+
+    if (!empty($filters['status'])) {
+        $sql .= " AND p.status = ?";
+        $params[] = $filters['status'];
+    }
+
+    if (!empty($filters['department'])) {
+        $sql .= " AND p.department_id = ?";
+        $params[] = $filters['department'];
+    }
+
+    if (!empty($filters['ward'])) {
+        $sql .= " AND p.ward_id = ?";
+        $params[] = $filters['ward'];
+    }
+
+    if (!empty($filters['sub_county'])) {
+        $sql .= " AND p.sub_county_id = ?";
+        $params[] = $filters['sub_county'];
+    }
+
+    if (!empty($filters['year'])) {
+        $sql .= " AND p.project_year = ?";
+        $params[] = $filters['year'];
+    }
+
+    if (!empty($filters['min_budget'])) {
+        $sql .= " AND p.budget >= ?";
+        $params[] = $filters['min_budget'];
+    }
+
+    if (!empty($filters['max_budget'])) {
+        $sql .= " AND p.budget <= ?";
+        $params[] = $filters['max_budget'];
+    }
+
+    $sql .= " ORDER BY p.created_at DESC";
+
+    if (!empty($filters['limit'])) {
+        $sql .= " LIMIT ?";
+        $params[] = $filters['limit'];
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get single project by ID
+ */
+function get_project_by_id($id) {
+    global $pdo;
+
+    $sql = "SELECT p.*, d.name as department_name, w.name as ward_name, 
+                   sc.name as sub_county_name, c.name as county_name
+            FROM projects p
+            JOIN departments d ON p.department_id = d.id
+            JOIN wards w ON p.ward_id = w.id
+            JOIN sub_counties sc ON p.sub_county_id = sc.id
+            JOIN counties c ON p.county_id = c.id
+            WHERE p.id = ?";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$id]);
+    return $stmt->fetch();
+}
+
+/**
+ * Get departments
+ */
+function get_departments() {
+    global $pdo;
+    $stmt = $pdo->query("SELECT * FROM departments ORDER BY name");
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get counties
+ */
+function get_counties() {
+    global $pdo;
+    $stmt = $pdo->query("SELECT * FROM counties ORDER BY name");
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get sub-counties by county
+ */
+function get_sub_counties($county_id = null) {
+    global $pdo;
+    if ($county_id) {
+        $stmt = $pdo->prepare("SELECT * FROM sub_counties WHERE county_id = ? ORDER BY name");
+        $stmt->execute([$county_id]);
+    } else {
+        $stmt = $pdo->query("SELECT sc.*, c.name as county_name FROM sub_counties sc JOIN counties c ON sc.county_id = c.id ORDER BY c.name, sc.name");
+    }
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get wards by sub-county
+ */
+function get_wards($sub_county_id = null) {
+    global $pdo;
+    if ($sub_county_id) {
+        $stmt = $pdo->prepare("SELECT * FROM wards WHERE sub_county_id = ? ORDER BY name");
+        $stmt->execute([$sub_county_id]);
+    } else {
+        $stmt = $pdo->query("SELECT w.*, sc.name as sub_county_name FROM wards w JOIN sub_counties sc ON w.sub_county_id = sc.id ORDER BY sc.name, w.name");
+    }
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get project years
+ */
+function get_project_years() {
+    global $pdo;
+    $stmt = $pdo->query("SELECT DISTINCT project_year FROM projects ORDER BY project_year DESC");
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
+/**
+ * Log activity
+ */
+function log_activity($activity, $admin_id = null) {
+    // You can implement activity logging here if needed
+    error_log("Activity: $activity (Admin: $admin_id)");
+}
+function get_migori_projects($department_filter = '', $status_filter = '', $year_filter = '', $search_query = '', $sub_county_filter = '', $step_status_filter = '') {
+    global $pdo;
+
+    $sql = "SELECT p.*, d.name as department_name, w.name as ward_name, 
+                   sc.name as sub_county_name, c.name as county_name
+            FROM projects p
+            LEFT JOIN departments d ON p.department_id = d.id
+            LEFT JOIN wards w ON p.ward_id = w.id
+            LEFT JOIN sub_counties sc ON p.sub_county_id = sc.id
+            LEFT JOIN counties c ON p.county_id = c.id
+            WHERE c.name = 'Migori'";
+
+    $params = [$step_status_filter];
+
+    if ($department_filter) {
+        $sql .= " AND p.department_id = ?";
+        $params[] = $department_filter;
+    }
+
+    if ($status_filter) {
+        $sql .= " AND p.status = ?";
+        $params[] = $status_filter;
+    }
+
+    if ($year_filter) {
+        $sql .= " AND p.project_year = ?";
+        $params[] = $year_filter;
+    }
+
+    if ($sub_county_filter) {
+        $sql .= " AND p.sub_county_id = ?";
+        $params[] = $sub_county_filter;
+    }
+
+    // Enhanced search: by name, sub-county, or year
+    if ($search_query) {
+        $sql .= " AND (p.project_name LIKE ? OR sc.name LIKE ? OR p.project_year LIKE ?)";
+        $search_param = '%' . $search_query . '%';
+        $params[] = $search_param;
+        $params[] = $search_param;
+        $params[] = $search_param;
+    }
+
+    $sql .= " ORDER BY p.created_at DESC";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get Migori sub-counties only
+ */
+function get_migori_sub_counties() {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT sc.* FROM sub_counties sc 
+                          JOIN counties c ON sc.county_id = c.id 
+                          WHERE c.name = 'Migori' ORDER BY sc.name");
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get project statistics for Migori County
+ */
+function get_project_stats() {
+    global $pdo;
+
+    $stmt = $pdo->prepare("SELECT 
+                            COUNT(*) as total,
+                            SUM(CASE WHEN status = 'ongoing' THEN 1 ELSE 0 END) as ongoing,
+                            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+                            SUM(CASE WHEN status = 'planning' THEN 1 ELSE 0 END) as planning,
+                            SUM(budget) as total_budget
+                          FROM projects p
+                          JOIN counties c ON p.county_id = c.id
+                          WHERE c.name = 'Migori'");
+    $stmt->execute();
+    return $stmt->fetch();
+}
+
+/**
+ * Get status text color class
+ */
+function get_status_text_class($status) {
+    switch ($status) {
+        case 'completed':
+            return 'text-green-600 dark:text-green-400';
+        case 'ongoing':
+            return 'text-blue-600 dark:text-blue-400';
+        case 'planning':
+            return 'text-yellow-600 dark:text-yellow-400';
+        case 'suspended':
+            return 'text-red-600 dark:text-red-400';
+        case 'cancelled':
+            return 'text-gray-600 dark:text-gray-400';
+        default:
+            return 'text-gray-600 dark:text-gray-400';
+    }
+}
+/**
+ * Send JSON response
+ */
+function json_response($data, $status_code = 200) {
+    http_response_code($status_code);
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    exit;
+}
+
+/**
+ * Upload file helper
+ */
+function handle_file_upload($file, $allowed_types = ['csv', 'xlsx']) {
+    if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
+        return ['success' => false, 'message' => 'File upload error'];
+    }
+
+    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+    if (!in_array($extension, $allowed_types)) {
+        return ['success' => false, 'message' => 'Invalid file type'];
+    }
+
+    if ($file['size'] > MAX_FILE_SIZE) {
+        return ['success' => false, 'message' => 'File too large'];
+    }
+
+    $filename = uniqid() . '_' . time() . '.' . $extension;
+    $filepath = UPLOAD_PATH . $filename;
+
+    if (!is_dir(UPLOAD_PATH)) {
+        mkdir(UPLOAD_PATH, 0755, true);
+    }
+
+    if (move_uploaded_file($file['tmp_name'], $filepath)) {
+        return ['success' => true, 'filename' => $filename, 'filepath' => $filepath];
+    }
+
+    return ['success' => false, 'message' => 'Failed to save file'];
+}
+?>
