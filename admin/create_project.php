@@ -514,79 +514,44 @@ $counties = get_counties();
             const subCountySelect = document.getElementById('subCountyId');
             const wardSelect = document.getElementById('wardId');
             
-            // Reset dropdowns
-            subCountySelect.innerHTML = '<option value="">Loading...</option>';
+            subCountySelect.innerHTML = '<option value="">Select Sub County</option>';
             wardSelect.innerHTML = '<option value="">Select Ward</option>';
             
             if (countyId) {
                 fetch(`../api/locations.php?action=sub_counties&county_id=${countyId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
+                    .then(response => response.json())
                     .then(data => {
-                        console.log('Sub-counties response:', data);
-                        subCountySelect.innerHTML = '<option value="">Select Sub County</option>';
-                        
-                        if (data.success && data.data && data.data.length > 0) {
+                        if (data.success) {
                             data.data.forEach(subCounty => {
                                 const option = document.createElement('option');
                                 option.value = subCounty.id;
                                 option.textContent = subCounty.name;
                                 subCountySelect.appendChild(option);
                             });
-                        } else {
-                            subCountySelect.innerHTML = '<option value="">No sub-counties found</option>';
-                            console.warn('No sub-counties found for county:', countyId);
                         }
                     })
-                    .catch(error => {
-                        console.error('Error loading sub-counties:', error);
-                        subCountySelect.innerHTML = '<option value="">Error loading sub-counties</option>';
-                        alert('Failed to load sub-counties. Please check your internet connection and try again.');
-                    });
-            } else {
-                subCountySelect.innerHTML = '<option value="">Select Sub County</option>';
+                    .catch(error => console.error('Error loading sub-counties:', error));
             }
         }
         
         function loadWards(subCountyId) {
             const wardSelect = document.getElementById('wardId');
-            wardSelect.innerHTML = '<option value="">Loading...</option>';
+            wardSelect.innerHTML = '<option value="">Select Ward</option>';
             
             if (subCountyId) {
                 fetch(`../api/locations.php?action=wards&sub_county_id=${subCountyId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
+                    .then(response => response.json())
                     .then(data => {
-                        console.log('Wards response:', data);
-                        wardSelect.innerHTML = '<option value="">Select Ward</option>';
-                        
-                        if (data.success && data.data && data.data.length > 0) {
+                        if (data.success) {
                             data.data.forEach(ward => {
                                 const option = document.createElement('option');
                                 option.value = ward.id;
                                 option.textContent = ward.name;
                                 wardSelect.appendChild(option);
                             });
-                        } else {
-                            wardSelect.innerHTML = '<option value="">No wards found</option>';
-                            console.warn('No wards found for sub-county:', subCountyId);
                         }
                     })
-                    .catch(error => {
-                        console.error('Error loading wards:', error);
-                        wardSelect.innerHTML = '<option value="">Error loading wards</option>';
-                        alert('Failed to load wards. Please check your internet connection and try again.');
-                    });
-            } else {
-                wardSelect.innerHTML = '<option value="">Select Ward</option>';
+                    .catch(error => console.error('Error loading wards:', error));
             }
         }
 
