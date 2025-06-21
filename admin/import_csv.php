@@ -71,8 +71,9 @@ ob_start();
                 <h3 class="text-lg font-medium text-gray-900 dark:text-white">Project Import Template</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Includes sample data and all required columns</p>
             </div>
-            <a href="csv_template.php" 
-               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors">
+            <a href="<?php echo BASE_URL; ?>uploads/Migori_Projects_Realistic.csv" 
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors"
+               download="Migori_Projects_Template.csv">
                 <i class="fas fa-download mr-2"></i>
                 Download Template
             </a>
@@ -238,11 +239,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('errorList').innerHTML = data.errors.map(error => `<li>• ${error}</li>`).join('');
                     }
                 } else {
-                    statusElement.innerHTML = '<span class="text-red-600">Import failed</span>';
+                    statusElement.innerHTML = '<span class="text-red-600">Import Failed! Check the errors Listed bellow</span>';
                     
                     document.getElementById('importStats').innerHTML = `
                         <div class="bg-red-50 dark:bg-red-900 rounded-lg p-4 text-center">
-                            <div class="text-lg font-bold text-red-600 dark:text-red-400">Import Failed</div>
+                            <div class="text-lg font-bold text-red-600 dark:text-red-400">Import Failed! Check the errors Listed bellow</div>
                             <div class="text-sm text-red-700 dark:text-red-300">${data.message}</div>
                         </div>
                     `;
