@@ -1643,8 +1643,10 @@ define('SMTP_ENCRYPTION', 'tls');
 ### 17.4 Contact Information
 
 **Technical Support:**
-- Email: support@migoricounty.go.ke
-- Phone: +254 020 123 4567
+- Email: fbhamisike@gmail.com
+- Phone: +254 702 353 585
+- Email: stevekyle106@gmail.com
+- Phone: +254 725 900 309
 - Hours: Monday-Friday, 8:00 AM - 5:00 PM EAT
 
 **System Administrator:**
@@ -1652,7 +1654,7 @@ define('SMTP_ENCRYPTION', 'tls');
 - Emergency: +254 700 000 000
 
 **Training and Documentation:**
-- Email: training@migoricounty.go.ke
+- Email: fbhamisike@gmail.com
 - Documentation updates: Check website regularly
 
 ---
